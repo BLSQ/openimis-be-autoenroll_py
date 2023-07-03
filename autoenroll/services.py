@@ -38,7 +38,11 @@ def get_autoenroll_product():
     """
     Autoenroll needs to know which product to create, this gets product configured into the app.
     """
-    return Product.objects.get(code=AutoenrollConfig.autoenroll_product_code, validity_to__isnull=True)
+    try:
+        return Product.objects.get(code=AutoenrollConfig.autoenroll_product_code, validity_to__isnull=True)
+    except Product.DoesNotExist:
+        logger.error(f"Autoenroll product {AutoenrollConfig.autoenroll_product_code} not found")
+        raise
 
 
 def get_or_create_policy(insuree, family, product):
