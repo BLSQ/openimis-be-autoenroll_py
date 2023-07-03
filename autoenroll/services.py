@@ -27,11 +27,9 @@ def autoenroll_family(insuree, family=None):
 
 def is_family_eligible_for_autoenroll(insuree):
     """
-    For this version, we'll manually check the age of the insuree (<5 or >=65)
+    In this unconditional autoenroll, we just return True.
     """
-    if insuree.age() < 5 or insuree.age() >= 65:
-        return True
-    return False
+    return True
 
 
 def get_autoenroll_product():
@@ -50,10 +48,7 @@ def get_or_create_policy(insuree, family, product):
     Check for the existence (and active status) of a policy for the given insuree and product.
     If it doesn't exist, create it.
     """
-    if insuree.age() < 5:
-        expiry_date = insuree.dob + timedelta(days=365 * 5)
-    else:
-        expiry_date = now() + timedelta(days=365 * 5)
+    expiry_date = now() + timedelta(days=365 * 5)  # unconditionally enroll for 5 years
 
     policy, policy_created = Policy.objects.get_or_create(
         validity_to=None,
