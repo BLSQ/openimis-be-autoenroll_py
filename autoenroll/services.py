@@ -60,6 +60,7 @@ def get_or_create_policy(insuree, family, product):
             expiry_date=expiry_date,
             enroll_date=now(),  # TODO use the registration date if available
             start_date=now(),  # TODO use the registration date if available
+            effective_date=now(),
             value=0,
             audit_user_id=-1,
         )
