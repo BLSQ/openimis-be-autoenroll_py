@@ -47,8 +47,9 @@ def get_or_create_policy(insuree, family, product):
     """
     Check for the existence (and active status) of a policy for the given insuree and product.
     If it doesn't exist, create it.
+    The created policy starts at the person's birth and lasts ~100 years.
     """
-    expiry_date = now() + timedelta(days=365 * 5)  # unconditionally enroll for 5 years
+    expiry_date = insuree.dob + timedelta(weeks=52 * 110)  # unconditionally enroll for ~100 years
 
     policy, policy_created = Policy.objects.get_or_create(
         validity_to=None,
@@ -58,9 +59,9 @@ def get_or_create_policy(insuree, family, product):
         defaults=dict(
             stage=Policy.STAGE_NEW,
             expiry_date=expiry_date,
-            enroll_date=now(),  # TODO use the registration date if available
-            start_date=now(),  # TODO use the registration date if available
-            effective_date=now(),
+            enroll_date=insuree.dob,
+            start_date=insuree.dob,
+            effective_date=insuree.dob,
             value=0,
             audit_user_id=-1,
         )
