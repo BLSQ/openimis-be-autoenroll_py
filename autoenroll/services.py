@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from dateutil.relativedelta import relativedelta
 from django.utils.timezone import now
 
 from policy.models import Policy
@@ -16,8 +17,8 @@ def autoenroll_family(insuree, family=None):
         return
     if not family:
         family = insuree.family
-    eligible_products = determine_eligibility_to_autoenrollment(insuree, family)
-    for product_code in eligible_products:
+    eligible_product_codes = determine_eligibility_to_autoenrollment(insuree, family)
+    for product_code in eligible_product_codes:
         product = get_autoenroll_product(product_code)
         policy, policy_created = get_or_create_policy(insuree, family, product)
         if policy_created:
@@ -28,20 +29,20 @@ def autoenroll_family(insuree, family=None):
 
 def determine_eligibility_to_autoenrollment(insuree, family):
     # Checks whether or not the insuree and family are eligible to products
-    eligible_products = set()
+    eligible_product_codes = set()
 
     if insuree.age() < 5:
-        eligible_products.add(AutoenrollConfig.autoenroll_product_minors)
+        eligible_product_codes.add(AutoenrollConfig.autoenroll_product_minors)
     elif insuree.age() >= 65:
-        eligible_products.add(AutoenrollConfig.autoenroll_product_elderly)
+        eligible_product_codes.add(AutoenrollConfig.autoenroll_product_elderly)
 
     if family.poverty:
-        eligible_products.add(AutoenrollConfig.autoenroll_product_indigents)
+        eligible_product_codes.add(AutoenrollConfig.autoenroll_product_indigents)
     # hasattr so that there is no crash for insuree.is_pregnant if this custom dev doesn't exist on the instance
     if hasattr(insuree, "is_pregnant") and insuree.is_pregnant:
-        eligible_products.add(AutoenrollConfig.autoenroll_product_pregnant_women)
+        eligible_product_codes.add(AutoenrollConfig.autoenroll_product_pregnant_women)
 
-    return eligible_products
+    return eligible_product_codes
 
 
 def get_autoenroll_product(code):
@@ -60,12 +61,14 @@ def get_or_create_policy(insuree, family, product):
     Check for the existence (and active status) of a policy for the given insuree and product.
     If it doesn't exist, create it.
     """
+    current_time = now()
     if insuree.age() < 5 and product.code == AutoenrollConfig.autoenroll_product_minors:
-        expiry_date = insuree.dob + timedelta(days=365 * 5)  # Policy until their 5th birthday
+        expiry_date = insuree.dob + relativedelta(years=5) - relativedelta(days=1)  # Policy until their 5th birthday
     elif insuree.age() >= 65 and product.code == AutoenrollConfig.autoenroll_product_elderly:
-        expiry_date = insuree.dob + timedelta(days=365 * 125)  # Policy until their 125th birthday
+        expiry_date = insuree.dob + relativedelta(years=125)  # Policy until their 125th birthday
     else:
-        expiry_date = now() + timedelta(days=365 * product.insurance_period)  # Otherwise we simply take the standard duration
+        # Otherwise we simply take the standard product duration
+        expiry_date = current_time + relativedelta(months=product.insurance_period) - relativedelta(days=1)
 
     policy, policy_created = Policy.objects.get_or_create(
         validity_to=None,
@@ -75,9 +78,9 @@ def get_or_create_policy(insuree, family, product):
         defaults=dict(
             stage=Policy.STAGE_NEW,
             expiry_date=expiry_date,
-            enroll_date=now(),  # TODO use the registration date if available
-            start_date=now(),  # TODO use the registration date if available
-            effective_date=now(),
+            enroll_date=current_time,  # TODO use the registration date if available
+            start_date=current_time,  # TODO use the registration date if available
+            effective_date=current_time,
             value=0,
             audit_user_id=-1,
         )
