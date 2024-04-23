@@ -89,3 +89,11 @@ def get_or_create_policy(insuree, family, product):
     if policy_created:
         logger.debug(f"Created policy {policy.id} for insuree {insuree.id}")
     return policy, policy_created
+
+
+def activate_policy_if_free_and_idle(policy: Policy):
+    if policy.value == 0 and policy.status == Policy.STATUS_IDLE:
+        policy.enroll_date = policy.start_date
+        policy.status = Policy.STATUS_ACTIVE
+        policy.save()
+        update_insuree_policies(policy, -1)
