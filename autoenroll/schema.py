@@ -96,8 +96,10 @@ def after_mutation(sender, **kwargs):
         # Policy mutations
         "CreatePolicyMutation": lambda x: on_policy_mutation(x),
         "UpdatePolicyMutation": lambda x: on_policy_mutation(x),
+        "RenewPolicyMutation": lambda x: on_policy_mutation(x),
         # Mobile mutations
         "MobileEnrollmentMutation": lambda x: on_mobile_mutation(x),
+        "MobilePolicyRenewalAndPremiumMutation": lambda x: on_mobile_mutation(x),
     }.get(sender._mutation_class, lambda x: [])(kwargs)
 
 
