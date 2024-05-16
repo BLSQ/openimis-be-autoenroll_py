@@ -94,6 +94,7 @@ def get_or_create_policy(insuree, family, product):
 def activate_policy_if_free_and_idle(policy: Policy):
     if policy.value == 0 and policy.status == Policy.STATUS_IDLE:
         policy.enroll_date = policy.start_date
+        policy.effective_date = policy.start_date
         policy.status = Policy.STATUS_ACTIVE
         policy.save()
         update_insuree_policies(policy, -1)
