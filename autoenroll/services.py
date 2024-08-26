@@ -61,14 +61,16 @@ def get_or_create_policy(insuree, family, product):
     Check for the existence (and active status) of a policy for the given insuree and product.
     If it doesn't exist, create it.
     """
-    current_time = now()
     if insuree.age() < 5 and product.code == AutoenrollConfig.autoenroll_product_minors:
         expiry_date = insuree.dob + relativedelta(years=5) - relativedelta(days=1)  # Policy until their 5th birthday
+        start_date = insuree.dob
     elif insuree.age() >= 65 and product.code == AutoenrollConfig.autoenroll_product_elderly:
         expiry_date = insuree.dob + relativedelta(years=125)  # Policy until their 125th birthday
+        start_date = insuree.dob + relativedelta(years=65)
     else:
         # Otherwise we simply take the standard product duration
-        expiry_date = current_time + relativedelta(months=product.insurance_period) - relativedelta(days=1)
+        start_date = now()
+        expiry_date = start_date + relativedelta(months=product.insurance_period) - relativedelta(days=1)
 
     policy, policy_created = Policy.objects.get_or_create(
         validity_to=None,
@@ -78,9 +80,9 @@ def get_or_create_policy(insuree, family, product):
         defaults=dict(
             stage=Policy.STAGE_NEW,
             expiry_date=expiry_date,
-            enroll_date=current_time,  # TODO use the registration date if available
-            start_date=current_time,  # TODO use the registration date if available
-            effective_date=current_time,
+            enroll_date=start_date,  # TODO use the registration date if available
+            start_date=start_date,  # TODO use the registration date if available
+            effective_date=start_date,
             value=0,
             audit_user_id=-1,
         )
