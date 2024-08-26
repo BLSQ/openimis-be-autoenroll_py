@@ -29,6 +29,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        error_message = (
+            "This command was created in order to clean data on the GMB production instance after the autoenrollment date bug fix."
+            "It was a one shot and should not be used again.")
+        print(error_message)
+        logger.error(error_message)
+        return
+
         children_code = options["children"]
         children_product = Product.objects.filter(validity_to__isnull=True, code=children_code).first()
         if not children_product:
